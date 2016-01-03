@@ -1,7 +1,6 @@
 #include <iostream>
 #include <vector>
-#include <boost/shared_ptr.hpp>
-#include <boost/thread.hpp>
+#include <thread>
 #include <boost/python.hpp>
 
 class ScopedGILRelease {
@@ -28,15 +27,14 @@ void nogil(int threads, long count)
   ScopedGILRelease release_gil = ScopedGILRelease();
   long thread_count = (long)ceil(count / threads);
 
-  std::vector<boost::shared_ptr<boost::thread> > v_threads;
-  for (int i=0; i != threads; i++) {
-    boost::shared_ptr<boost::thread> m_thread = boost::shared_ptr<boost::thread>(new boost::thread(boost::bind(loop,thread_count)));
-    v_threads.push_back(m_thread);
-  }
+  std::vector<std::thread> v_threads;
+  for (int i=0; i != threads; i++)
+    {
+      v_threads.push_back(std::thread(loop,thread_count));
+    }
 
-  for (int i=0; i != v_threads.size(); i++)
-    v_threads[i]->join();
-
+  std::for_each(v_threads.begin(),v_threads.end(), std::mem_fn(&std::thread::join));
+ 
   return;
 }
 
